@@ -15,27 +15,22 @@ KNOTS_TO_KMH = 1.852
 
 # Fridge Definitions
 FRIDGES = [
-    {"imei": "356938035643809", "lat": -33.8688, "lng": 18.6819, "name": "Brackenfell Shop", "type": "static"},
-    {"imei": "356938035643810", "lat": -34.0023, "lng": 18.4239, "name": "Constantia Shop", "type": "static"},
-    {"imei": "356938035643811", "lat": -33.9249, "lng": 18.4241, "name": "Cruise Pantry", "type": "boat", "speed_knots": 15, "route": [(-29.8587, 31.0218), (-33.9249, 18.4241)], "progress": 0, "direction": 1},
-    {"imei": "356938035643812", "lat": -33.9249, "lng": 18.4241, "name": "Cargo Container", "type": "boat", "speed_knots": 12, "route": [(-33.9249, 18.4241), (38.7223, -9.1393)], "progress": 0, "direction": 1, "signal": True},
-    {"imei": "356938035643813", "lat": -33.9249, "lng": 18.4241, "name": "Cape Town Truck", "type": "truck", "speed_kmh": 60, "route": [(-33.9249, 18.4241), (-33.6167, 19.0111), (-33.9321, 18.8602)], "progress": 0, "direction": 1, "stops": 0},
-    {"imei": "356938035643814", "lat": -33.9249, "lng": 18.4241, "name": "Springbok Truck", "type": "truck", "speed_kmh": 70, "route": [(-33.9249, 18.4241), (-29.6641, 17.8866)], "progress": 0, "direction": 1, "stops": 0},
+    {"imei": "356938035643809", "lat": -33.8688, "lng": 18.6819, "name": "Brackenfell Shop", "type": "static", "token": "FMC230_356938035643809"},
+    {"imei": "356938035643810", "lat": -34.0023, "lng": 18.4239, "name": "Constantia Shop", "type": "static", "token": "FMC230_356938035643810"},
+    {"imei": "356938035643811", "lat": -33.9249, "lng": 18.4241, "name": "Cruise Pantry", "type": "boat", "speed_knots": 15, "route": [(-29.8587, 31.0218), (-33.9249, 18.4241)], "progress": 0, "direction": 1, "token": "FMC230_356938035643811"},
+    {"imei": "356938035643812", "lat": -33.9249, "lng": 18.4241, "name": "Cargo Container", "type": "boat", "speed_knots": 12, "route": [(-33.9249, 18.4241), (38.7223, -9.1393)], "progress": 0, "direction": 1, "signal": True, "token": "FMC230_356938035643812"},
+    {"imei": "356938035643813", "lat": -33.9249, "lng": 18.4241, "name": "Cape Town Truck", "type": "truck", "speed_kmh": 60, "route": [(-33.9249, 18.4241), (-33.6167, 19.0111), (-33.9321, 18.8602)], "progress": 0, "direction": 1, "stops": 0, "token": "FMC230_356938035643813"},
+    {"imei": "356938035643814", "lat": -33.9249, "lng": 18.4241, "name": "Springbok Truck", "type": "truck", "speed_kmh": 70, "route": [(-33.9249, 18.4241), (-29.6641, 17.8866)], "progress": 0, "direction": 1, "stops": 0, "token": "FMC230_356938035643814"},
 ]
 
-FRIDGES[0]["token"] = "FMC230_356938035643809"
-FRIDGES[1]["token"] = "FMC230_356938035643810"
-FRIDGES[2]["token"] = "FMC230_356938035643811"
-FRIDGES[3]["token"] = "FMC230_356938035643812"
-FRIDGES[4]["token"] = "FMC230_356938035643813"
-FRIDGES[5]["token"] = "FMC230_356938035643814"
+
 
 # MQTT Callbacks
 def on_connect(client, userdata, flags, rc):
-    print("Connected to MQTT Broker!" if rc == 0 else f"Connection failed: {rc}")
+    print(f"Connected {userdata['imei']} to MQTT Broker!" if rc == 0 else f"Connection failed for {userdata['imei']}: {rc}")
 
 def on_publish(client, userdata, mid):
-    print(f"Message {mid} published!")
+    print(f"Message {mid} published for {userdata['imei']}!")
 
 # Helper Functions
 def haversine(lat1, lon1, lat2, lon2):
@@ -145,20 +140,28 @@ def generate_packet(fridge):
         fridge["signal"] = not fridge["signal"]
     return packet
 
-# MQTT Client Setup
-client.on_connect = on_connect
-client.on_publish = on_publish
-client.connect(BROKER, PORT, 60)
-client.loop_start()
+# Create clients per device
+clients = {}
+for fridge in FRIDGES:
+    if fridge["token"]:
+        client = mqtt.Client(client_id=f"fmc230_{fridge['imei']}")  # Unique client_id per IMEI
+        client.user_data_set({"imei": fridge["imei"]})  # Pass IMEI to callbacks
+        client.on_connect = on_connect
+        client.on_publish = on_publish
+        client.username_pw_set(username=fridge["token"])  # Token as username, no password
+        client.connect(BROKER, PORT, 60)
+        client.loop_start()
+        clients[fridge["imei"]] = client
 
 # Main Loop
 while True:
     for fridge in FRIDGES:
-        client.username_pw_set(username=fridge["token"])
-        topic = f"teltonika/{fridge['imei']}/from"
-        packet = generate_packet(fridge)
-        payload = json.dumps(packet)
-        result = client.publish(topic, payload)
-        result.wait_for_publish()
-        print(f"Published to {topic}: {payload[:100]}...")
+        if fridge["token"]:  # Only if token exists
+            client = clients[fridge["imei"]]
+            topic = f"teltonika/{fridge['imei']}/from"
+            packet = generate_packet(fridge)
+            payload = json.dumps(packet)
+            result = client.publish(topic, payload)
+            result.wait_for_publish()
+            print(f"Published to {topic}: {payload[:100]}...")
     time.sleep(10)
