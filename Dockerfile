@@ -1,10 +1,5 @@
-FROM python:3.9
-
-WORKDIR .
-
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
-
-COPY fmc230_simulator.py .
-
-CMD ["python", "fmc230_simulator"]
+FROM python:3.10-slim
+WORKDIR /app
+COPY fmc230_simulator.py /app/fmc230_simulator.py
+RUN pip install paho-mqtt==1.6.1  # Your version
+CMD ["python3", "fmc230_simulator.py"]
