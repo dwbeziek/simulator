@@ -54,7 +54,7 @@ var mappings = {
     "16": "total_odometer",
     "636": "umts_lte_cell_id",
     "11": "iccid_1",
-    "14": "iccid_1",
+    "14": "iccid_2",
     "387": "coordinates",
     "252": "unplugged",
     "10800": "eye_temp",
