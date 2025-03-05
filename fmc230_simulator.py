@@ -124,7 +124,7 @@ def generate_packet(fridge):
                 "10812": 1 if speed > 0 or door_opens > 0 else 0,  # EYE Movement 1 (0/1)
                 "10816": random.randint(-90, 90),  # EYE Pitch 1 (degrees)
                 "10820": 0 if sensor_battery > 3000 else 1,  # EYE Low Battery 1 (0/1)
-                "10800": int(temp),  # EYE Temperature 1 (m°C)
+                "10800": int(temp * 100),  # EYE Temperature 1 (m°C)
                 "10824": int(sensor_battery),  # EYE Battery Voltage 1 (mV)
                 "10832": random.randint(-180, 180),  # EYE Roll 1 (degrees)
                 "10836": door_opens,  # EYE Movement Count 1
