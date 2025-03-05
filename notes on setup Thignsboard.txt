@@ -108,3 +108,5 @@ for (var key in telemetry) {
 }
 
 return {msg: newMsg, metadata: metadata, msgType: msgType};
+
+//Setup another node to convert data
