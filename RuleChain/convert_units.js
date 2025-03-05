@@ -11,10 +11,10 @@ var conversions = {
     "external_voltage": function(v) { return v / 1000; },  // mV to V
     "battery_voltage": function(v) { return v / 1000; },   // mV to V
     "battery_current": function(v) { return v / 1000; },   // mA to A
-    "eye_battery_level": function(v) { return v / 1000; }, // mV to V
-    "eye_battery_level_2": function(v) { return v / 1000; },
-    "eye_battery_level_3": function(v) { return v / 1000; },
-    "eye_battery_level_4": function(v) { return v / 1000; }
+    "eye_battery_voltage": function(v) { return v / 1000; }, // mV to V
+    "eye_battery_voltage_2": function(v) { return v / 1000; },
+    "eye_battery_voltage_3": function(v) { return v / 1000; },
+    "eye_battery_voltage_4": function(v) { return v / 1000; }
 };
 
 var telemetry = msg.msg || msg;
