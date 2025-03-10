@@ -1,0 +1,25 @@
+Core Features (Shared)
+Device Management: Both support unlimited devices—profiles, credentials (e.g., MQTT, HTTP).
+Telemetry: Time-series data storage (Postgres in CE, Cassandra/Hybrid in PE)—key-value pairs (e.g., eye_temp).
+Rule Engine: Customizable workflows—nodes for transformations (e.g., “Flatten Packet”), integrations.
+Dashboards: Widgets (Time Series, Maps)—manual exports (CSV/PNG).
+MQTT/HTTP/CoAP: Device connectivity—your teltonika/{imei}/from works in both.
+Open-Source: CE is Apache 2.0—PE builds on it but adds proprietary features.
+Key Differences
+Feature	Community Edition (CE)	Professional Edition (PE)
+License	Open-source (Apache 2.0)—free, modify freely	Commercial—subscription-based ($10-$1999/month)—source available, not fully open
+Scalability	Single-node—~10k devices—manual clustering possible	Multi-node clustering—100k+ devices—load balancing, high availability
+Database	PostgreSQL only (embedded or external)—timeseries in ts_kv	Hybrid (PostgreSQL + Cassandra/TimescaleDB)—optimized for massive timeseries
+Timeseries Functions	Basic—store/query via ts_kv—no advanced aggregation (e.g., avg, min)—manual SQL	Advanced—aggregation (avg, sum, min/max), downsampling—built-in TimescaleDB support
+White-Labeling	Manual—edit source (logo, colors)—no domain/email customization	Full—custom domain, logo, colors, email templates—UI rebranding out-of-box
+Scheduled Reports	None—manual dashboard exports (CSV/PNG)	Yes—PDF/CSV reports—scheduled (daily/weekly)—email delivery
+Advanced Widgets	Basic—Time Series, Tables, Maps—no clustering	Enhanced—marker clustering, advanced charts—better for 15,000 devices
+Data Visualization	Limited—manual widget config—no advanced analytics	Richer—prebuilt analytics widgets—trend analysis, heatmaps
+Rule Engine	Core nodes—transform, filter, external—custom scripts	Extra nodes—advanced analytics, scheduling, REST integrations—more prebuilt options
+Multi-Tenancy	Basic—tenants/customers—manual user management	Enhanced—tenant profiles, rate limits—self-service for clients
+Security	Basic—user roles, MQTT credentials—no SSO	Advanced—SSO (OAuth, SAML), 2FA, IP whitelisting—enterprise-grade
+Device Provisioning	Manual—add devices via UI/API	Automated—bulk provisioning, OTA firmware updates—device groups
+Performance	~500 msg/s single-node—tune Postgres for more	~10k+ msg/s—optimized DB, caching—scales horizontally
+Backup/Restore	Manual—pg_dump Postgres	Built-in—scheduled backups, UI restore—disaster recovery
+Support	Community—GitHub, forums	Commercial—24/7 support, SLAs—dedicated team
+Cost	Free—self-hosted—your effort	$10/month (1 user) to $1999/month (unlimited)—cloud or self-hosted
