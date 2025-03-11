@@ -24,4 +24,7 @@ for (var key in telemetry) {
     }
 }
 
+var loc = newMsg.location.split(",");
+newMsg.latitude = parseFloat(loc[0]);
+newMsg.longitude = parseFloat(loc[1]);
 return {msg: newMsg, metadata: metadata, msgType: msgType};
