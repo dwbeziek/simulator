@@ -5,7 +5,7 @@ import paho.mqtt.client as mqtt
 from math import sin, cos, radians, sqrt, atan2, degrees
 
 # MQTT Setup
-BROKER = "mqtt://localhost" # use localhost if you want to run manually
+BROKER = "localhost" # use localhost if you want to run manually
 PORT = 1883
 client = mqtt.Client()
 
