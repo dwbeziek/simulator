@@ -215,6 +215,7 @@ def simulate_ship(ship, client):
             door_opens = random.randint(0, 2) if ship["docking"] else 0
             temp = -20 + door_opens * 0.1
             humidity = random.randint(0, 95)
+            sensor_battery = random.uniform(2800, 3200)
             packet = {
                 "state": {
                     "reported": {
@@ -262,9 +263,9 @@ def simulate_ship(ship, client):
                         "10808": 1 if door_opens > 0 else 0,
                         "10812": 1 if speed > 0 or door_opens > 0 else 0,
                         "10816": random.randint(-90, 90),
-                        "10820": 0,
+                        "10820": 0 if sensor_battery > 3000 else 1,
                         "10800": int(temp * 100),
-                        "10824": random.randint(2800, 3200),
+                        "10824": int(sensor_battery),
                         "10832": random.randint(-180, 180),
                         "10836": door_opens,
                         "10840": door_opens,
