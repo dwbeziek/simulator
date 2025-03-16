@@ -44,12 +44,22 @@ for ship in SHIPS:
         end = ship["ports"][(i + 1) % len(ship["ports"])]
         route = sr.searoute([start[1], start[0]], [end[1], end[0]])
         coords = [(coord[1], coord[0]) for coord in route.geometry["coordinates"]]
-        # Thin points dynamically based on speed, cap at 100 points max
-        step = max(5, int(15 / (ship["speed_knots"] / 15)))  # Scale with speed
-        thinned = [coords[j] for j in range(0, min(len(coords), 100), step)]
+        # Ensure at least start and end points
+        if len(coords) < 2:
+            coords = [start, end]
+        # Thin points dynamically, ensure at least 2 points
+        step = max(1, min(int(15 / (ship["speed_knots"] / 15)), len(coords) // 2))
+        thinned = [coords[j] for j in range(0, len(coords), step)]
+        if len(thinned) < 2:
+            thinned = [coords[0], coords[-1]]
         port_routes.append(thinned)
         routes.extend(thinned[:-1])
-    routes.append(routes[0])  # Loop back
+    # Only append if routes is non-empty
+    if routes:
+        routes.append(routes[0])  # Loop back
+    else:
+        # Fallback: Use the first port as a single-point route
+        routes = [ship["ports"][0]]
     ship["route"] = routes
     ship["port_routes"] = port_routes
     ship["position"] = 0
@@ -101,16 +111,14 @@ def simulate_ship(ship, client):
                 pos = 0
                 ship["current_segment"] = 0
                 ship["port_idx"] = 0
-                ship["first_start"] = False  # Reset for new cycle
+                ship["first_start"] = False
 
-            # Determine current segment and route
             current_route = ship["port_routes"][ship["current_segment"]]
             segment_pos = pos % len(current_route)
             start = current_route[segment_pos]
             end = current_route[segment_pos + 1] if segment_pos + 1 < len(current_route) else current_route[-1]
             distance = haversine(start[0], start[1], end[0], end[1])
 
-            # Check if at port
             target_port = ship["ports"][(ship["port_idx"] + 1) % len(ship["ports"])]
             at_port = abs(start[0] - target_port[0]) < 0.01 and abs(start[1] - target_port[1]) < 0.01
             ship["at_port"] = at_port
@@ -122,7 +130,7 @@ def simulate_ship(ship, client):
                 else:
                     if not ship["docking"]:
                         ship["docking"] = True
-                        ship["docking_time"] = random.randint(3600, 10800)  # 1-3 hours
+                        ship["docking_time"] = random.randint(3600, 10800)
                     speed = HARBOR_SPEED_KNOTS * KNOTS_TO_KMH
                     if ship["docking"]:
                         ship["docking_time"] -= 10
@@ -136,27 +144,23 @@ def simulate_ship(ship, client):
                             continue
             else:
                 speed = ship["speed_knots"] * KNOTS_TO_KMH
-                if random.random() < 0.05:  # Detour
+                if random.random() < 0.05:
                     detour_pos = min(segment_pos + random.randint(5, 20), len(current_route) - 1)
                     end = current_route[detour_pos]
                     distance = haversine(start[0], start[1], end[0], end[1])
 
-            # Move with minimum step to prevent lockup
             distance_per_step = (speed / 3600) * 10
             fraction = min(max(distance_per_step / distance if distance > 0 else 1, MIN_STEP), 1)
             lat, lng = interpolate_position(start[0], start[1], end[0], end[1], fraction)
             ship["position"] += fraction if fraction < 1 else 1
 
-            # Force progress if stuck
             if abs(ship["position"] - pos) < 0.01 and not at_port:
                 ship["position"] += 1
 
-            # Payload
             ts = int(time.time() * 1000)
             door_opens = random.randint(0, 2) if ship["docking"] else 0
             temp = -20 + door_opens * 0.1
             humidity = random.randint(0, 95)
-            sensor_battery = random.uniform(2800, 3200)
             packet = {
                 "state": {
                     "reported": {
@@ -204,9 +208,9 @@ def simulate_ship(ship, client):
                         "10808": 1 if door_opens > 0 else 0,
                         "10812": 1 if speed > 0 or door_opens > 0 else 0,
                         "10816": random.randint(-90, 90),
-                        "10820": 0 if sensor_battery > 3000 else 1,
+                        "10820": 0,
                         "10800": int(temp * 100),
-                        "10824":int(sensor_battery),
+                        "10824": random.randint(2800, 3200),
                         "10832": random.randint(-180, 180),
                         "10836": door_opens,
                         "10840": door_opens,
