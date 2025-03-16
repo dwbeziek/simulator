@@ -17,7 +17,7 @@ TOPIC = "teltonika/{}/from"
 KNOTS_TO_KMH = 1.852
 EARTH_RADIUS = 6371  # km
 HARBOR_SPEED_KNOTS = 5  # Safe harbor speed
-MIN_STEP = 0.1  # Minimum progress step to prevent lockup
+MIN_STEP = 0.0001  # Very small minimum step for finer control
 
 # Ships with Sizes and Speeds
 SHIPS = [
@@ -39,6 +39,7 @@ SHIPS = [
 for ship in SHIPS:
     routes = []
     port_routes = []
+    total_distance = 0
     for i in range(len(ship["ports"])):
         start = ship["ports"][i]
         end = ship["ports"][(i + 1) % len(ship["ports"])]
@@ -54,17 +55,21 @@ for ship in SHIPS:
             thinned = [coords[0], coords[-1]]
         port_routes.append(thinned)
         routes.extend(thinned[:-1])
+        # Calculate segment distance for total route
+        if len(thinned) > 1:
+            for j in range(len(thinned) - 1):
+                total_distance += haversine(thinned[j][0], thinned[j][1], thinned[j + 1][0], thinned[j + 1][1])
     # Only append if routes is non-empty
     if routes:
         routes.append(routes[0])  # Loop back
     else:
-        # Fallback: Use the first port as a single-point route
         routes = [ship["ports"][0]]
     ship["route"] = routes
     ship["port_routes"] = port_routes
+    ship["total_distance"] = total_distance  # Store total route distance in km
     ship["position"] = 0
     ship["current_segment"] = 0
-    logger.info(f"Generated route for {ship['name']} with {len(routes)} points")
+    logger.info(f"Generated route for {ship['name']} with {len(routes)} points, total distance {total_distance:.1f} km")
 
 # MQTT Callbacks
 def on_connect(client, userdata, flags, rc, properties=None):
@@ -130,7 +135,7 @@ def simulate_ship(ship, client):
                 else:
                     if not ship["docking"]:
                         ship["docking"] = True
-                        ship["docking_time"] = random.randint(3600, 10800)
+                        ship["docking_time"] = random.randint(3600, 10800)  # 1-3 hours
                     speed = HARBOR_SPEED_KNOTS * KNOTS_TO_KMH
                     if ship["docking"]:
                         ship["docking_time"] -= 10
@@ -149,13 +154,17 @@ def simulate_ship(ship, client):
                     end = current_route[detour_pos]
                     distance = haversine(start[0], start[1], end[0], end[1])
 
-            distance_per_step = (speed / 3600) * 10
-            fraction = min(max(distance_per_step / distance if distance > 0 else 1, MIN_STEP), 1)
+            # Calculate realistic progress (1% of total distance per hour, scaled to 10s)
+            hours_per_cycle = 10 / 3600  # 10 seconds = 1/360th of an hour
+            distance_per_hour = speed  # km/h
+            total_progress_per_hour = distance_per_hour / ship["total_distance"]  # Fraction of total route per hour
+            fraction = min(max(total_progress_per_hour * hours_per_cycle, MIN_STEP), 1)
             lat, lng = interpolate_position(start[0], start[1], end[0], end[1], fraction)
             ship["position"] += fraction if fraction < 1 else 1
 
-            if abs(ship["position"] - pos) < 0.01 and not at_port:
-                ship["position"] += 1
+            # Force progress if stuck, but small increment
+            if abs(ship["position"] - pos) < MIN_STEP * 10 and not at_port:
+                ship["position"] += MIN_STEP * 10
 
             ts = int(time.time() * 1000)
             door_opens = random.randint(0, 2) if ship["docking"] else 0
