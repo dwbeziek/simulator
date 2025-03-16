@@ -17,20 +17,20 @@ TOPIC = "teltonika/{}/from"
 KNOTS_TO_KMH = 1.852
 EARTH_RADIUS = 6371  # km
 
-# Ships (unchanged ports from last update)
+# Ships
 SHIPS = [
     {"imei": "356938035643815", "name": "OceanPulse Cape-NZ-AUS", "token": "FMC230_356938035643815", "main_port": "Cape Town",
-     "ports": [(-33.9249, 18.4241), (-36.8436, 174.7657), (-33.8572, 151.2100)], "speed_knots": 15, "progress": 0, "docking": False, "docking_time": 0},
+     "ports": [(-33.9249, 18.4241), (-36.8436, 174.7657), (-33.8572, 151.2100)], "speed_knots": 15, "position": 0, "docking": False, "docking_time": 0},
     {"imei": "356938035643816", "name": "OceanPulse Cape-Asia", "token": "FMC230_356938035643816", "main_port": "Cape Town",
-     "ports": [(-33.9249, 18.4241), (-6.1214, 106.7741), (1.2903, 103.8519), (3.1478, 101.6990), (31.2497, 121.5007), (25.0330, 121.5645), (35.5291, 139.7000)], "speed_knots": 14, "progress": 0, "docking": False, "docking_time": 0},
+     "ports": [(-33.9249, 18.4241), (-6.1214, 106.7741), (1.2903, 103.8519), (3.1478, 101.6990), (31.2497, 121.5007), (25.0330, 121.5645), (35.5291, 139.7000)], "speed_knots": 14, "position": 0, "docking": False, "docking_time": 0},
     {"imei": "356938035643817", "name": "OceanPulse SA-Coast", "token": "FMC230_356938035643817", "main_port": "Cape Town",
-     "ports": [(-33.9249, 18.4241), (-33.9600, 25.6022), (-29.8579, 31.0292), (-28.7864, 32.0377), (-32.9890, 17.8850)], "speed_knots": 12, "progress": 0, "docking": False, "docking_time": 0},
+     "ports": [(-33.9249, 18.4241), (-33.9600, 25.6022), (-29.8579, 31.0292), (-28.7864, 32.0377), (-32.9890, 17.8850)], "speed_knots": 12, "position": 0, "docking": False, "docking_time": 0},
     {"imei": "356938035643818", "name": "OceanPulse Cape-Europe", "token": "FMC230_356938035643818", "main_port": "Cape Town",
-     "ports": [(-33.9249, 18.4241), (41.6331, 12.0839), (39.4699, -0.3750), (37.9420, 23.6469), (49.6328, 0.1307), (43.2965, 16.4392)], "speed_knots": 16, "progress": 0, "docking": False, "docking_time": 0},
+     "ports": [(-33.9249, 18.4241), (41.6331, 12.0839), (39.4699, -0.3750), (37.9420, 23.6469), (49.6328, 0.1307), (43.2965, 16.4392)], "speed_knots": 16, "position": 0, "docking": False, "docking_time": 0},
     {"imei": "356938035643819", "name": "OceanPulse North-Europe", "token": "FMC230_356938035643819", "main_port": "London",
-     "ports": [(51.5080, 0.6400), (53.3331, -6.2489), (59.9494, 10.7564), (59.2753, 18.0076), (55.6867, 12.5701), (60.1559, 24.9503), (64.1355, -21.8954)], "speed_knots": 15, "progress": 0, "docking": False, "docking_time": 0},
+     "ports": [(51.5080, 0.6400), (53.3331, -6.2489), (59.9494, 10.7564), (59.2753, 18.0076), (55.6867, 12.5701), (60.1559, 24.9503), (64.1355, -21.8954)], "speed_knots": 15, "position": 0, "docking": False, "docking_time": 0},
     {"imei": "356938035643820", "name": "OceanPulse Cape-Americas", "token": "FMC230_356938035643820", "main_port": "Cape Town",
-     "ports": [(-33.9249, 18.4241), (40.6331, -74.0200), (19.1738, -96.1342), (23.1330, -82.3830), (-23.9608, -46.3331), (-34.9011, -56.1645)], "speed_knots": 14, "progress": 0, "docking": False, "docking_time": 0}
+     "ports": [(-33.9249, 18.4241), (40.6331, -74.0200), (19.1738, -96.1342), (23.1330, -82.3830), (-23.9608, -46.3331), (-34.9011, -56.1645)], "speed_knots": 14, "position": 0, "docking": False, "docking_time": 0}
 ]
 
 # Generate Routes
@@ -41,8 +41,8 @@ for ship in SHIPS:
         end = ship["ports"][(i + 1) % len(ship["ports"])]
         route = sr.searoute([start[1], start[0]], [end[1], end[0]])
         coords = [(coord[1], coord[0]) for coord in route.geometry["coordinates"]]
-        routes.extend(coords[:-1])  # Avoid duplicating end/start points
-    routes.append(routes[0])  # Close the loop
+        routes.extend(coords[:-1])
+    routes.append(routes[0])  # Loop back
     ship["route"] = routes
     logger.info(f"Generated route for {ship['name']} with {len(routes)} points")
 
@@ -85,13 +85,12 @@ def simulate_ship(ship, client):
     total_points = len(route) - 1
     while True:
         try:
-            # Progress across entire route
-            idx = int(ship["progress"] * total_points)
-            if idx >= total_points:
-                ship["progress"] = 0  # Loop back to start
-                idx = 0
-            start = route[idx]
-            end = route[idx + 1]
+            pos = int(ship["position"])
+            if pos >= total_points:
+                ship["position"] = 0  # Loop back
+                pos = 0
+            start = route[pos]
+            end = route[pos + 1]
             distance = haversine(start[0], start[1], end[0], end[1])
 
             # Docking Logic
@@ -104,19 +103,19 @@ def simulate_ship(ship, client):
                 if ship["docking_time"] <= 0:
                     ship["docking"] = False
                 speed = 0
+                lat, lng = start[0], start[1]  # Stay at port
             else:
                 speed = ship["speed_knots"] * KNOTS_TO_KMH
                 if near_port:
                     speed *= 0.3
                 if random.random() < 0.05:  # Detour
-                    detour_idx = min(idx + random.randint(5, 20), total_points - 1)
-                    end = route[detour_idx]
+                    detour_pos = min(pos + random.randint(5, 20), total_points - 1)
+                    end = route[detour_pos]
                     distance = haversine(start[0], start[1], end[0], end[1])
-                step = (speed / 3600) / (EARTH_RADIUS * 2 * 3.14159)  # Approx Earth circ.
-                ship["progress"] += step * 10 / total_points
-
-            fraction = (ship["progress"] * total_points) % 1
-            lat, lng = interpolate_position(start[0], start[1], end[0], end[1], fraction)
+                time_to_next = distance / (speed / 3600)  # Seconds to next point
+                fraction = min(10 / time_to_next, 1) if time_to_next > 0 else 1
+                lat, lng = interpolate_position(start[0], start[1], end[0], end[1], fraction)
+                ship["position"] += fraction if fraction < 1 else 1
 
             # Payload
             ts = int(time.time() * 1000)
@@ -132,8 +131,8 @@ def simulate_ship(ship, client):
                         "latlng": f"{lat},{lng}",
                         "alt": 5,
                         "ang": random.randint(0, 360),
-                        "sat": random.randint(3, 15),
                         "sp": speed,
+                        "sat": random.randint(3, 15),
                         "evt": 0,
                         "imei": ship["imei"],
                         "17": random.randint(-369, 460),
