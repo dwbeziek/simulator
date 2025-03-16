@@ -16,34 +16,44 @@ PORT = 1883
 TOPIC = "teltonika/{}/from"
 KNOTS_TO_KMH = 1.852
 EARTH_RADIUS = 6371  # km
+HARBOR_SPEED_KNOTS = 5  # Safe harbor speed
+MIN_STEP = 0.1  # Minimum progress step to prevent lockup
 
-# Ships
+# Ships with Sizes and Speeds
 SHIPS = [
-    {"imei": "356938035643815", "name": "OceanPulse Cape-NZ-AUS", "token": "FMC230_356938035643815", "main_port": "Cape Town",
-     "ports": [(-33.9249, 18.4241), (-36.8436, 174.7657), (-33.8572, 151.2100)], "speed_knots": 15, "position": 0, "docking": False, "docking_time": 0},
-    {"imei": "356938035643816", "name": "OceanPulse Cape-Asia", "token": "FMC230_356938035643816", "main_port": "Cape Town",
-     "ports": [(-33.9249, 18.4241), (-6.1214, 106.7741), (1.2903, 103.8519), (3.1478, 101.6990), (31.2497, 121.5007), (25.0330, 121.5645), (35.5291, 139.7000)], "speed_knots": 14, "position": 0, "docking": False, "docking_time": 0},
-    {"imei": "356938035643817", "name": "OceanPulse SA-Coast", "token": "FMC230_356938035643817", "main_port": "Cape Town",
-     "ports": [(-33.9249, 18.4241), (-33.9600, 25.6022), (-29.8579, 31.0292), (-28.7864, 32.0377), (-32.9890, 17.8850)], "speed_knots": 12, "position": 0, "docking": False, "docking_time": 0},
-    {"imei": "356938035643818", "name": "OceanPulse Cape-Europe", "token": "FMC230_356938035643818", "main_port": "Cape Town",
-     "ports": [(-33.9249, 18.4241), (41.6331, 12.0839), (39.4699, -0.3750), (37.9420, 23.6469), (49.6328, 0.1307), (43.2965, 16.4392)], "speed_knots": 16, "position": 0, "docking": False, "docking_time": 0},
-    {"imei": "356938035643819", "name": "OceanPulse North-Europe", "token": "FMC230_356938035643819", "main_port": "London",
-     "ports": [(51.5080, 0.6400), (53.3331, -6.2489), (59.9494, 10.7564), (59.2753, 18.0076), (55.6867, 12.5701), (60.1559, 24.9503), (64.1355, -21.8954)], "speed_knots": 15, "position": 0, "docking": False, "docking_time": 0},
-    {"imei": "356938035643820", "name": "OceanPulse Cape-Americas", "token": "FMC230_356938035643820", "main_port": "Cape Town",
-     "ports": [(-33.9249, 18.4241), (40.6331, -74.0200), (19.1738, -96.1342), (23.1330, -82.3830), (-23.9608, -46.3331), (-34.9011, -56.1645)], "speed_knots": 14, "position": 0, "docking": False, "docking_time": 0}
+    {"imei": "356938035643815", "name": "OceanPulse Cape-NZ-AUS", "token": "FMC230_356938035643815", "main_port": "Cape Town", "type": "Container",
+     "ports": [(-33.9249, 18.4241), (-36.8436, 174.7657), (-33.8572, 151.2100)], "speed_knots": 11, "position": 0, "at_port": False, "port_idx": 0, "docking": False, "docking_time": 0, "first_start": True},
+    {"imei": "356938035643816", "name": "OceanPulse Cape-Asia", "token": "FMC230_356938035643816", "main_port": "Cape Town", "type": "Bulk Carrier",
+     "ports": [(-33.9249, 18.4241), (-6.1214, 106.7741), (1.2903, 103.8519), (3.1478, 101.6990), (31.2497, 121.5007), (25.0330, 121.5645), (35.5291, 139.7000)], "speed_knots": 13, "position": 0, "at_port": False, "port_idx": 0, "docking": False, "docking_time": 0, "first_start": True},
+    {"imei": "356938035643817", "name": "OceanPulse SA-Coast", "token": "FMC230_356938035643817", "main_port": "Cape Town", "type": "Feeder",
+     "ports": [(-33.9249, 18.4241), (-33.9600, 25.6022), (-29.8579, 31.0292), (-28.7864, 32.0377), (-32.9890, 17.8850)], "speed_knots": 15, "position": 0, "at_port": False, "port_idx": 0, "docking": False, "docking_time": 0, "first_start": True},
+    {"imei": "356938035643818", "name": "OceanPulse Cape-Europe", "token": "FMC230_356938035643818", "main_port": "Cape Town", "type": "Container",
+     "ports": [(-33.9249, 18.4241), (41.6331, 12.0839), (39.4699, -0.3750), (37.9420, 23.6469), (49.6328, 0.1307), (43.2965, 16.4392)], "speed_knots": 10, "position": 0, "at_port": False, "port_idx": 0, "docking": False, "docking_time": 0, "first_start": True},
+    {"imei": "356938035643819", "name": "OceanPulse North-Europe", "token": "FMC230_356938035643819", "main_port": "London", "type": "Bulk Carrier",
+     "ports": [(51.5080, 0.6400), (53.3331, -6.2489), (59.9494, 10.7564), (59.2753, 18.0076), (55.6867, 12.5701), (60.1559, 24.9503), (64.1355, -21.8954)], "speed_knots": 12, "position": 0, "at_port": False, "port_idx": 0, "docking": False, "docking_time": 0, "first_start": True},
+    {"imei": "356938035643820", "name": "OceanPulse Cape-Americas", "token": "FMC230_356938035643820", "main_port": "Cape Town", "type": "Tanker",
+     "ports": [(-33.9249, 18.4241), (40.6331, -74.0200), (19.1738, -96.1342), (23.1330, -82.3830), (-23.9608, -46.3331), (-34.9011, -56.1645)], "speed_knots": 14, "position": 0, "at_port": False, "port_idx": 0, "docking": False, "docking_time": 0, "first_start": True}
 ]
 
 # Generate Routes
 for ship in SHIPS:
     routes = []
+    port_routes = []
     for i in range(len(ship["ports"])):
         start = ship["ports"][i]
         end = ship["ports"][(i + 1) % len(ship["ports"])]
         route = sr.searoute([start[1], start[0]], [end[1], end[0]])
         coords = [(coord[1], coord[0]) for coord in route.geometry["coordinates"]]
-        routes.extend(coords[:-1])
+        # Thin points dynamically based on speed, cap at 100 points max
+        step = max(5, int(15 / (ship["speed_knots"] / 15)))  # Scale with speed
+        thinned = [coords[j] for j in range(0, min(len(coords), 100), step)]
+        port_routes.append(thinned)
+        routes.extend(thinned[:-1])
     routes.append(routes[0])  # Loop back
     ship["route"] = routes
+    ship["port_routes"] = port_routes
+    ship["position"] = 0
+    ship["current_segment"] = 0
     logger.info(f"Generated route for {ship['name']} with {len(routes)} points")
 
 # MQTT Callbacks
@@ -87,35 +97,59 @@ def simulate_ship(ship, client):
         try:
             pos = int(ship["position"])
             if pos >= total_points:
-                ship["position"] = 0  # Loop back
+                ship["position"] = 0
                 pos = 0
-            start = route[pos]
-            end = route[pos + 1]
+                ship["current_segment"] = 0
+                ship["port_idx"] = 0
+                ship["first_start"] = False  # Reset for new cycle
+
+            # Determine current segment and route
+            current_route = ship["port_routes"][ship["current_segment"]]
+            segment_pos = pos % len(current_route)
+            start = current_route[segment_pos]
+            end = current_route[segment_pos + 1] if segment_pos + 1 < len(current_route) else current_route[-1]
             distance = haversine(start[0], start[1], end[0], end[1])
 
-            # Docking Logic
-            near_port = any(haversine(start[0], start[1], p[0], p[1]) < 5 for p in ship["ports"])
-            if near_port and not ship["docking"] and random.random() < 0.2:
-                ship["docking"] = True
-                ship["docking_time"] = random.randint(360, 720)
-            if ship["docking"]:
-                ship["docking_time"] -= 10
-                if ship["docking_time"] <= 0:
-                    ship["docking"] = False
-                speed = 0
-                lat, lng = start[0], start[1]  # Stay at port
+            # Check if at port
+            target_port = ship["ports"][(ship["port_idx"] + 1) % len(ship["ports"])]
+            at_port = abs(start[0] - target_port[0]) < 0.01 and abs(start[1] - target_port[1]) < 0.01
+            ship["at_port"] = at_port
+
+            if at_port:
+                if ship["first_start"]:
+                    ship["first_start"] = False
+                    speed = ship["speed_knots"] * KNOTS_TO_KMH
+                else:
+                    if not ship["docking"]:
+                        ship["docking"] = True
+                        ship["docking_time"] = random.randint(3600, 10800)  # 1-3 hours
+                    speed = HARBOR_SPEED_KNOTS * KNOTS_TO_KMH
+                    if ship["docking"]:
+                        ship["docking_time"] -= 10
+                        if ship["docking_time"] <= 0:
+                            ship["docking"] = False
+                            ship["port_idx"] = (ship["port_idx"] + 1) % len(ship["ports"])
+                            ship["current_segment"] = (ship["current_segment"] + 1) % len(ship["ports"])
+                            ship["position"] = (pos // len(current_route)) * len(current_route) + len(current_route)
+                            if ship["position"] >= total_points:
+                                ship["position"] = 0
+                            continue
             else:
                 speed = ship["speed_knots"] * KNOTS_TO_KMH
-                if near_port:
-                    speed *= 0.3
                 if random.random() < 0.05:  # Detour
-                    detour_pos = min(pos + random.randint(5, 20), total_points - 1)
-                    end = route[detour_pos]
+                    detour_pos = min(segment_pos + random.randint(5, 20), len(current_route) - 1)
+                    end = current_route[detour_pos]
                     distance = haversine(start[0], start[1], end[0], end[1])
-                time_to_next = distance / (speed / 3600)  # Seconds to next point
-                fraction = min(10 / time_to_next, 1) if time_to_next > 0 else 1
-                lat, lng = interpolate_position(start[0], start[1], end[0], end[1], fraction)
-                ship["position"] += fraction if fraction < 1 else 1
+
+            # Move with minimum step to prevent lockup
+            distance_per_step = (speed / 3600) * 10
+            fraction = min(max(distance_per_step / distance if distance > 0 else 1, MIN_STEP), 1)
+            lat, lng = interpolate_position(start[0], start[1], end[0], end[1], fraction)
+            ship["position"] += fraction if fraction < 1 else 1
+
+            # Force progress if stuck
+            if abs(ship["position"] - pos) < 0.01 and not at_port:
+                ship["position"] += 1
 
             # Payload
             ts = int(time.time() * 1000)
@@ -172,7 +206,7 @@ def simulate_ship(ship, client):
                         "10816": random.randint(-90, 90),
                         "10820": 0 if sensor_battery > 3000 else 1,
                         "10800": int(temp * 100),
-                        "10824": int(sensor_battery),
+                        "10824":int(sensor_battery),
                         "10832": random.randint(-180, 180),
                         "10836": door_opens,
                         "10840": door_opens,
