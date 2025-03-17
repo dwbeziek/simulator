@@ -10,6 +10,19 @@ import searoute as sr
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Helper Functions
+def haversine(lat1, lon1, lat2, lon2):
+    dlat = radians(lat2 - lat1)
+    dlon = radians(lon2 - lon1)
+    a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1-a))
+    return EARTH_RADIUS * c
+
+def interpolate_position(start_lat, start_lng, end_lat, end_lng, fraction):
+    lat = start_lat + (end_lat - start_lat) * fraction
+    lng = start_lng + (end_lng - start_lng) * fraction
+    return lat, lng
+
 # MQTT Setup
 BROKER = "localhost"
 PORT = 1883
@@ -92,19 +105,6 @@ def on_disconnect(client, userdata, rc):
 def on_publish(client, userdata, mid):
     logger.debug(f"Message {mid} published for {userdata['imei']}")
 
-# Helper Functions
-def haversine(lat1, lon1, lat2, lon2):
-    dlat = radians(lat2 - lat1)
-    dlon = radians(lon2 - lon1)
-    a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
-    c = 2 * atan2(sqrt(a), sqrt(1-a))
-    return EARTH_RADIUS * c
-
-def interpolate_position(start_lat, start_lng, end_lat, end_lng, fraction):
-    lat = start_lat + (end_lat - start_lat) * fraction
-    lng = start_lng + (end_lng - start_lng) * fraction
-    return lat, lng
-
 def simulate_ship(ship, client):
     route = ship["route"]
     total_points = len(route) - 1
@@ -154,10 +154,10 @@ def simulate_ship(ship, client):
                     end = current_route[detour_pos]
                     distance = haversine(start[0], start[1], end[0], end[1])
 
-            # Calculate realistic progress (1% of total distance per hour, scaled to 10s)
+            # Calculate realistic progress (0.1% of total distance per hour, scaled to 10s)
             hours_per_cycle = 10 / 3600  # 10 seconds = 1/360th of an hour
             distance_per_hour = speed  # km/h
-            total_progress_per_hour = distance_per_hour / ship["total_distance"]  # Fraction of total route per hour
+            total_progress_per_hour = distance_per_hour / ship["total_distance"] * 0.1  # 0.1% of total route per hour
             fraction = min(max(total_progress_per_hour * hours_per_cycle, MIN_STEP), 1)
             lat, lng = interpolate_position(start[0], start[1], end[0], end[1], fraction)
             ship["position"] += fraction if fraction < 1 else 1
