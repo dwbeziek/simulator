@@ -16,7 +16,7 @@ client_key_path = "certs/400000000000002.key"
 
 # Fridge Definitions
 FRIDGES = [
-    {"imei": "400000000000002", "lat": -33.8688, "lng": 18.6819, "name": "Brackenfell Shop"}
+    {"imei": "400000000000002", "lat": -33.8673337, "lng": 18.6344686, "name": "Engen Durban Road Convenience Centre"}
 ]
 
 
