@@ -10,13 +10,13 @@ PORT = 8883
 
 # Certificate paths
 ca_cert_path = "../rootCA.pem"
-client_cert_path = "certs/400000000000001_chain.pem"
-client_key_path = "certs/400000000000001.key"
+client_cert_path = "certs/400000000000004_chain.pem"
+client_key_path = "certs/400000000000004.key"
 
 
 # Fridge Definitions
 FRIDGES = [
-    {"imei": "400000000000001", "lat": -33.8688, "lng": 18.6819, "name": "Brackenfell Shop"}
+    {"imei": "400000000000004", "lat": -33.8688, "lng": 18.6819, "name": "Brackenfell Shop"}
 ]
 
 
