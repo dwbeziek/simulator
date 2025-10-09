@@ -17,6 +17,7 @@ var mappings = {
     "113": "battery_level",
     "181": "gnss_pdop",
     "182": "gnss_hdop",
+    "9": "external_current",
     "66": "external_voltage",
     "206": "gsm_area_code",
     "67": "battery_voltage",
